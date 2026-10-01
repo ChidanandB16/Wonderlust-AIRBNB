@@ -1,16 +1,32 @@
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
-const passportLocalMongoose = require("passport-local-mongoose");
+const express = require("express");
 
-const userSchema = new Schema({
-    email: {
-        type: String,
-        required: true,
-        unique: true,
-    },
-    // ... other user fields
-});
+const router = express.Router();
+const User = require("../models/user.js");
+const wrapAsync = require("../utils/wrapAsync.js");
+const passport = require("passport");
+const { saveRedirectUrl } = require("../middleware.js");
 
-userSchema.plugin(passportLocalMongoose);
+const userController = require("../controllers/users.js");
 
-module.exports = mongoose.model("User", userSchema); // Model name is "user"
+// For SignUp
+router
+.route("/signup")
+.get( userController.renderSignupForm)
+.post(wrapAsync(userController.signup));
+ 
+// For Login
+router
+   .route("/login") 
+   .get(userController.renderLoginForm)
+   .post(saveRedirectUrl,
+    passport.authenticate("local", { 
+    failureRedirect: '/login', 
+    failureFlash: true 
+}), 
+   userController.login
+);
+
+ router.get("/logout",userController.logout)
+
+
+module.exports = router;

@@ -1,22 +1,24 @@
-// review.js
+const express = require("express");
+const router = express.Router({mergeParams: true });
 const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
+const Listing = require("../models/listing.js");
+const Review = require("../models/review.js");
+const wrapAsync = require("../utils/wrapAsync");
+const validateReview = require("../utils/validateReview.js");
+const { isLoggedIn,isReviewAuthor } = require("../middleware.js");
 
-const reviewSchema = new Schema({
-  comment: String,
-  rating: {
-    type: Number,
-    min: 1,
-    max: 5,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now(),
-  },
-  author : {
-    type: Schema.Types.ObjectId,
-    ref:"User",
-  }
-});
+const reviewController = require("../controllers/reviews.js");
 
-module.exports = mongoose.model("Review", reviewSchema);
+// Create Reviews
+router.post(
+  "/",
+  validateReview,
+  wrapAsync(reviewController.createReview));
+
+// Delete Review Route
+router.delete(
+  "/:reviewId",
+  isLoggedIn,
+  wrapAsync(reviewController.destroyReview));
+
+module.exports = router;
